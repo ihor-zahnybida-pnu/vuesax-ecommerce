@@ -1,11 +1,11 @@
 import { NextApiResponse, NextApiRequest } from 'next'
 
-import { Item } from '../../../interfaces/Item';
-import { items } from '../../../data';
+import { Product } from '../../../interfaces/product';
+import { products, categories, brands } from '@/data';
 
 export default function handler(
   _req: NextApiRequest,
-  res: NextApiResponse<Item[]>
-) {
-  return res.status(200).json(items)
+  res: NextApiResponse<{ products: Product[], categories: string[], brands: string[] }>
+  ) {
+    return res.status(200).json({products, categories, brands});
 }

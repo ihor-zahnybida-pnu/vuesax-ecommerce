@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import Container from "@/components/layout/layout/container/container.component";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-const WishesStyled = styled.div`
+const BucketStyled = styled.div`
   width: 100%;
   table,
   th,
@@ -24,21 +24,22 @@ const WishesStyled = styled.div`
     width: 80%;
   }
 `;
-const Wishes = () => {
+const Bucket = () => {
   const router = useRouter();
-  const { data, error, isLoading } = useSWR<Product[]>("/api/wishes", fetcher);
+  const { data, error, isLoading } = useSWR<Product[]>("/api/bucket", fetcher);
 
-  const [storedWishes] = useLocalStorage<string[]>(Keys.WISHES, []);
+  const [storedBucket] = useLocalStorage<string[]>(Keys.BUCKETS, []);
 
   if (error) return <div>Failed to load</div>;
   if (isLoading) return <div>Loading...</div>;
   if (!data) return null;
 
+  console.log(data)
   return (
     <Container>
-      <WishesStyled>
+      <BucketStyled>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: 'center' }}>
-          <h1>Wishes</h1>
+          <h1>Bucket</h1>
           <Button
             type={"textOnly"}
             title="Products"
@@ -54,7 +55,7 @@ const Wishes = () => {
             <th>price</th>
             <th>rating</th>
           </tr>
-          {getProducts(data, storedWishes).map((item, index) => {
+          {getProducts(data, storedBucket).map((item, index) => {
             return (
               <tr key={item.id}>
                 <td>{index}</td>
@@ -67,15 +68,16 @@ const Wishes = () => {
             );
           })}
         </table>
-      </WishesStyled>
+      </BucketStyled>
     </Container>
   );
 };
-export default Wishes;
 
-const getProducts = (data: Product[], storedWishes: string[]): Product[] => {
+export default Bucket;
+
+const getProducts = (data: Product[], storedBucket: string[]): Product[] => {
   const res: Product[] = [];
-  storedWishes.forEach((id) => {
+  storedBucket.forEach((id) => {
     const findItem = data.find((i) => i.id === id);
     if (findItem) {
       res.push(findItem);

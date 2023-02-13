@@ -2,6 +2,9 @@ import styled from "styled-components";
 import useLayout from "../layout/layout/context/use-layout";
 import Button from "../button.component";
 import { DoubleIconLeft, DoubleIconRight } from "../icons";
+import Filters from "../filters/filters.componet";
+import { Product } from "@/interfaces/product";
+import { Dispatch } from "react";
 
 const SidebarStyled = styled.div`
   display: grid;
@@ -10,7 +13,14 @@ const SidebarStyled = styled.div`
   height: 100%;
 `;
 
-const Sidebar = () => {
+interface SidebarProps { 
+  categories: string[];
+  brands: string[];
+  values: Product[];
+  setFilters: (filter: any) => void;
+} 
+
+const Sidebar: React.FC<SidebarProps> = ({categories, brands, values, setFilters}) => {
   const { isSidebarOpen, toggleSidebar } = useLayout();
 
   return (
@@ -30,9 +40,9 @@ const Sidebar = () => {
           onClick={toggleSidebar}
         />
       </TitleIconWrapper>
-      <Filters>
-        <div>Filters control</div>
-      </Filters>
+
+      <Filters filters={{ categories, brands }} values={values} setFilters={setFilters} />
+
       <Button type="textOnly" onClick={console.log} title="CLEAR ALL FILTERS" />
     </SidebarStyled>
   );
@@ -43,12 +53,4 @@ export default Sidebar;
 const TitleIconWrapper = styled.div`
   display: flex;
   justify-content: space-between;
-`;
-
-const Filters = styled.div`
-  background: white;
-  border-radius: 5px;
-  padding: 10px 20px;
-  overflow: scroll;
-  box-shadow: 0px 0px 3px 1px rgba(0, 0, 0, 0.1);
 `;

@@ -7,10 +7,13 @@ import Sidebar from "./../components/templates/sidebar.component";
 import Page from "./../components/layout/page/page";
 import ButtonGroup from "./../components/button-group.component";
 import Search from "./../components/search.component";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ListOfItems from "@/components/templates/items/list-of-items.component";
-import { Item } from "@/interfaces/Item";
+import { Product } from "@/interfaces/product";
 import { useRouter } from "next/router";
+import ItemContext from "@/components/templates/items/item-context";
+import useLocalStorage from "@/utilities/use-local-storage";
+import { Keys } from "@/interfaces/keys";
 
 const IndexStyled = styled.div`
   padding-block-start: 0.7em;
@@ -24,55 +27,116 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const Index = () => {
   const router = useRouter();
   const [search, setSearch] = useState<string>("");
+  const [filters, setFilters] = useState<{ property: string; value: string }[]>([])
+    // [{ property: "category", value: "laptops" }]
 
-  const { data, error, isLoading } = useSWR<Item[]>("/api/items", fetcher);
+  const handleFilterChanges = (filter: any) => {
+    if(filterApplied(filters, filter)) {
+      setFilters(prev => prev = prev.filter((x) => x.value !== filter.value))
+    } else {
+      setFilters(prev => prev = [...prev, filter]);
+    }
+  };
+
+  const [storedBucket, setStoredBucket] = useLocalStorage<string[]>(
+    Keys.BUCKETS,
+    []
+  );
+  const [storedWishes, setStoredWishes] = useLocalStorage<string[]>(
+    Keys.WISHES,
+    []
+  );
+  const { data, error, isLoading } = useSWR<{
+    products: Product[];
+    categories: string[];
+    brands: string[];
+  }>("/api/items", fetcher);
+
+  const values = useMemo(
+    () => searchItems(data?.products, search, filters),
+    [data?.products, search, filters]
+  );
 
   if (error) return <div>Failed to load</div>;
   if (isLoading) return <div>Loading...</div>;
   if (!data) return null;
 
   return (
-    <Page
-      content={
-        <Container>
-          <IndexStyled>
-            <Title>
-              <div>
-                {data.length} result {data.length > 1 ? "s" : ""} found
-              </div>
-              <ButtonGroup>
-                <Button
-                  type="iconOnly"
-                  icon={
-                    <ShoppingCart
-                      width={"20px"}
-                      height={"15px"}
-                      color="white"
-                    />
-                  }
-                  color="#0b75c0"
-                  onClick={() => router.push("/basket")}
-                />
-                <Button
-                  type="iconOnly"
-                  icon={<Heart width={"20px"} height={"15px"} color="white" />}
-                  color="#0b75c0"
-                  onClick={() => router.push("/wishes")}
-                />
-              </ButtonGroup>
-            </Title>
+    <ItemContext.Provider
+      value={{
+        isInBucketList: (id: string) => storedBucket.indexOf(id) > -1,
+        addItemToBucket: (id: string) =>
+          setStoredBucket((prev) => {
+            return prev ? (prev = [...prev, id]) : [];
+          }),
+        removeItemFromBucket: (id: string) =>
+          setStoredBucket((prev) => {
+            return prev ? (prev = prev.filter((x) => x !== id)) : [];
+          }),
+        isInWishList: (id: string) => storedWishes.indexOf(id) > -1,
+        addItemToWishes: (id: string) =>
+          setStoredWishes((prev) => {
+            return prev ? (prev = [...prev, id]) : [];
+          }),
+        removeItemFromWishes: (id: string) =>
+          setStoredWishes((prev) => {
+            return prev ? (prev = prev.filter((x) => x !== id)) : [];
+          }),
+      }}
+    >
+      <Page
+        content={
+          <Container>
+            <IndexStyled>
+              <Title>
+                <div>{values.length} results found</div>
+                <ButtonGroup>
+                  <Button
+                    type="iconLeft"
+                    icon={
+                      <ShoppingCart
+                        width={"20px"}
+                        height={"15px"}
+                        color="white"
+                      />
+                    }
+                    title={`${storedBucket.length}`}
+                    background="#0b75c0"
+                    color="white"
+                    onClick={() => router.push("/bucket")}
+                  />
+                  <Button
+                    type="iconLeft"
+                    title={`${storedWishes.length}`}
+                    icon={
+                      <Heart width={"20px"} height={"15px"} color="white" />
+                    }
+                    background="#0b75c0"
+                    color="white"
+                    onClick={() => router.push("/wishes")}
+                  />
+                </ButtonGroup>
+              </Title>
 
-            <Search
-              value={search}
-              onValueChanged={(value) => setSearch((prev) => (prev = value))}
-            />
+              <Search
+                value={search}
+                onValueChanged={(value) => setSearch((prev) => (prev = value))}
+              />
 
-            <ListOfItems items={searchItems(data, search)} />
-          </IndexStyled>
-        </Container>
-      }
-      sidebar={<Sidebar />}
-    />
+              <ListOfItems items={values} />
+            </IndexStyled>
+          </Container>
+        }
+        sidebar={
+          <Sidebar
+            categories={data.categories}
+            brands={data.brands}
+            values={values}
+            setFilters={handleFilterChanges}
+          />
+        }
+      />
+    </ItemContext.Provider>
   );
 };
 
@@ -85,15 +149,30 @@ const Title = styled.div`
   margin-block-end: 1em;
 `;
 
-const searchItems = (items: Item[], query: string): Item[] => {
-  return items.filter((item) => {
-    return ["name", "description"].some((newItem) => {
-      return (
-        (item as any)[newItem]
-          .toString()
-          .toLowerCase()
-          .indexOf(query.toLowerCase()) > -1
-      );
+const searchItems = (
+  items: Product[] = [],
+  query: string,
+  filters: any
+): Product[] => {
+  return items
+    .filter((item) => {
+      return ["title", "brand"].some((newItem) => {
+        return (
+          (item as any)[newItem]
+            .toString()
+            .toLowerCase()
+            .indexOf(query.toLowerCase()) > -1
+        );
+      });
+    }).filter((item) => {
+      if(filters.length === 0) {return true;}
+      else return [...filters].some((newItem) => {
+        return  (item as any)[newItem.property].toString().replace('-',"").toLowerCase().indexOf(newItem.value.replace(" ", "_").toLowerCase()) > -1;
+      });
     });
-  });
 };
+
+const filterApplied = (filters: { property: string; value: string; }[], filter: { property: string; value: string; }): boolean =>  {
+  return filters.some(f => f.value === filter.value);
+}
+

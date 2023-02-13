@@ -1,13 +1,15 @@
 import styled from "styled-components";
 import Image from "next/image";
 
-import { Item } from "../../../interfaces/Item";
-import example from "./../../../assets/img/phone.jpg";
+import { Product } from "../../../interfaces/product";
 import Button from "./../../button.component";
 import { AddToCart, Heart, Star } from "./../../icons";
 import ButtonGroup from "./../../button-group.component";
+import useItem from "./use-item";
+import ItemContext from "./item-context";
+import { useContext } from "react";
 interface ItemProps {
-  item: Item;
+  item: Product;
 }
 const ItemStyled = styled.div`
   background: white;
@@ -20,6 +22,10 @@ const ItemStyled = styled.div`
   gap: 25px;
   border-radius: 5px;
   box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.1);
+
+  img {
+    object-fit: contain;
+  }
 
   .button-group {
     position: absolute;
@@ -38,32 +44,43 @@ const ItemStyled = styled.div`
 `;
 
 const Item: React.FC<ItemProps> = ({ item }) => {
+  const { isItemInBucketList, isItemInWishList } = useItem(item.id);
+  const { addItemToBucket, removeItemFromBucket, addItemToWishes, removeItemFromWishes } = useContext(ItemContext);
+
   return (
     <ItemStyled>
-      <Image src={item.img} alt={item.name} sizes="100vw" height={250} />
+      <Image src={item.images[0] ?? item.images[1]} alt={item.brand} sizes="100vw" width={280} height={200} />
       <LikePriceContainer>
-        {item.rating && <Button
-          type={"iconRight"}
-          title={`${item.rating}`}
-          icon={<Star width={"12px"} height={"12px"} color="white" />}
-        />}
-        <div className="price">{item.currency}{item.price}</div>
+        {item.rating && (
+          <Button
+            type={"iconRight"}
+            title={`${item.rating}`}
+            icon={<Star width={"12px"} height={"12px"} color="white" />}
+          />
+        )}
+        <div className="price">
+          ${item.price}
+        </div>
       </LikePriceContainer>
       <ItemDescription>
-        <div className="name">{item.name}</div>
-        <div className="description">{item.description}</div>
+        <div className="name">{item.title}</div>
       </ItemDescription>
 
       <ButtonGroup fluid gap="0">
         <Button
-          title="WISHLIST"
+          title={isItemInWishList ?  'UNLIKE' : "LIKE"}
           icon={<Heart width={"15px"} height={"15px"} />}
-          onClick={console.log}
+          onClick={() => isItemInWishList ? removeItemFromWishes(item.id) : addItemToWishes(item.id) }
           type={"iconLeft"}
           background="lightgray"
           color="black"
         />
-        <Button title="ADD TO CART" icon={<AddToCart width={"15px"} height={"15px"} color="white" />} onClick={console.log} type={"iconLeft"} />
+        <Button
+          title={`${isItemInBucketList ? "REMOVE ITEM" : "ADD TO CART"} `}
+          icon={<AddToCart width={"15px"} height={"15px"} color="white" />}
+          onClick={() => isItemInBucketList ? removeItemFromBucket(item.id) : addItemToBucket(item.id)}
+          type={"iconLeft"}
+        />
       </ButtonGroup>
     </ItemStyled>
   );

@@ -5,6 +5,7 @@ import useInternalLayout from "./context/use-internal-layout";
 import { HeaderZone } from "./zones/header.zone.component";
 import { FooterZone } from "./zones/footer.zone.component";
 import { ContentZone } from "./zones/content.zone.component";
+import { breakpoints } from "@/utilities/media-queries";
 
 export interface LayoutStyledProps {
   headerHeight?: string;
@@ -25,6 +26,9 @@ const LayoutStyled = styled.div.attrs<LayoutStyledProps>((props) => {
   display: flex;
   height: 100vh;
 
+  max-width: ${(props) => props.theme.maxWidth};
+  margin: 0 auto;
+
   .header-zone {
     height: ${(props) => props.headerHeight};
   }
@@ -36,9 +40,10 @@ const LayoutStyled = styled.div.attrs<LayoutStyledProps>((props) => {
   }
 `;
 const Layout: React.FC<LayoutProps> = ({ header, content, footer, isSidebarOpen }) => {
+  
   return (
     <LayoutProvider isSidebarOpen={isSidebarOpen}>
-      <LayoutStyled className="layout">
+      <LayoutStyled theme={{maxWidth: `${breakpoints.max}px`}} className="layout">
         {header && <HeaderZone>{header}</HeaderZone>}
         <ContentZone>{content}</ContentZone>
         {footer && <FooterZone>{footer}</FooterZone>}

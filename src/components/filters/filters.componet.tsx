@@ -10,6 +10,7 @@ interface FiltersProps {
   };
   values: Product[];
   setFilters: (filter: any) => void;
+  itemFilters:{ property: string; value: string; forceClear?: boolean; }[];
 }
 
 const FilterStyled = styled.div`
@@ -27,11 +28,11 @@ const FilterStyled = styled.div`
   }
 `;
 
-const Filters: React.FC<FiltersProps> = ({ filters, values, setFilters }) => {
+const Filters: React.FC<FiltersProps> = ({ filters, values, setFilters, itemFilters}) => {
   return (
     <FilterStyled>
       {Object.keys(filters).map((item) => (
-        <Filter key={item} filter={(filters as any)[item]} title={item} values={values} setFilters={setFilters} />
+        <Filter key={item} filter={(filters as any)[item]} title={item} values={values} setFilters={setFilters}  itemFilters={itemFilters}/>
       ))}
     </FilterStyled>
   );

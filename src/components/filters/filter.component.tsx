@@ -7,6 +7,7 @@ interface FilterProps {
   title: string;
   values: Product[];
   setFilters: (filter: any) => void;
+  itemFilters: { property: string; value: string; forceClear?: boolean }[];
 }
 
 const FilterStyled = styled.div`
@@ -15,34 +16,47 @@ const FilterStyled = styled.div`
   align-items: center;
 `;
 
-const Filter: React.FC<FilterProps> = ({ filter, title, values, setFilters }) => {
+const Filter: React.FC<FilterProps> = ({
+  filter,
+  title,
+  values,
+  setFilters,
+  itemFilters,
+}) => {
   const handleEventChanged = (item: string) => {
     setFilters({
-        property: title === "categories" ? "category" :title === 'brands' ? 'brand' : '',
-        value: item,
-      });
+      property:
+        title === "categories" ? "category" : title === "brands" ? "brand" : "",
+      value: item,
+    });
   };
 
   return (
     <>
       <h5 className="filter__item-title">{title.toUpperCase()}</h5>
 
-      {filter.map((item) => (
-        <FilterStyled key={item} className="filter">
-          <InputLabelWrapper>
-            <input
-              type="checkbox"
-              defaultChecked={false}
-              onChange={(e) => handleEventChanged(item)}
-              id={item}
-            />
-            <label htmlFor={item}>{item}</label>
-          </InputLabelWrapper>
-          <span className="filter__item-count">
-            {getFilteredProduct(values, item, title).length}
-          </span>
-        </FilterStyled>
-      ))}
+      {filter.map((item) => {
+        return (
+          <FilterStyled key={item} className="filter">
+            <InputLabelWrapper>
+              <input
+                type="checkbox"
+                checked={
+                  itemFilters.filter(
+                    (i) => i.value.toLowerCase() === item.toLowerCase()
+                  ).length > 0
+                }
+                onChange={(e) => handleEventChanged(item)}
+                id={item}
+              />
+              <label htmlFor={item}>{item}</label>
+            </InputLabelWrapper>
+            <span className="filter__item-count">
+              {getFilteredProduct(values, item, title).length}
+            </span>
+          </FilterStyled>
+        );
+      })}
     </>
   );
 };

@@ -1,5 +1,7 @@
 export { default as AddToCart } from './add-to-cart';
 export { default as Cancel } from './cancel';
+export { default as ChevronLeft } from './chevron-left';
+export { default as ChevronRight } from './chevron-right';
 export { default as DoubleIconLeft } from './double-arrow-left';
 export { default as DoubleIconRight } from './double-arrow-right';
 export { default as Heart } from './heart';

@@ -49,7 +49,7 @@ const Item: React.FC<ItemProps> = ({ item }) => {
 
   return (
     <ItemStyled>
-      <Image src={item.images[0] ?? item.images[1]} alt={item.brand} sizes="100vw" width={280} height={200} />
+      <Image src={item.images[0]} alt={item.brand} sizes="100vw" width={280} height={200} />
       <LikePriceContainer>
         {item.rating && (
           <Button

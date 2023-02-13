@@ -4,7 +4,6 @@ import Button from "../button.component";
 import { DoubleIconLeft, DoubleIconRight } from "../icons";
 import Filters from "../filters/filters.componet";
 import { Product } from "@/interfaces/product";
-import { Dispatch } from "react";
 
 const SidebarStyled = styled.div`
   display: grid;
@@ -18,9 +17,10 @@ interface SidebarProps {
   brands: string[];
   values: Product[];
   setFilters: (filter: any) => void;
+  itemFilters:{ property: string; value: string; forceClear?: boolean; }[];
 } 
 
-const Sidebar: React.FC<SidebarProps> = ({categories, brands, values, setFilters}) => {
+const Sidebar: React.FC<SidebarProps> = ({categories, brands, values, setFilters, itemFilters}) => {
   const { isSidebarOpen, toggleSidebar } = useLayout();
 
   return (
@@ -41,9 +41,9 @@ const Sidebar: React.FC<SidebarProps> = ({categories, brands, values, setFilters
         />
       </TitleIconWrapper>
 
-      <Filters filters={{ categories, brands }} values={values} setFilters={setFilters} />
+      <Filters filters={{ categories, brands }} values={values} setFilters={setFilters}  itemFilters={itemFilters}/>
 
-      <Button type="textOnly" onClick={console.log} title="CLEAR ALL FILTERS" />
+      <Button type="textOnly" onClick={() => setFilters({forceClear: true})} title="CLEAR ALL FILTERS" />
     </SidebarStyled>
   );
 };

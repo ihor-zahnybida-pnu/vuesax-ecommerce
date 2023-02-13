@@ -14,6 +14,9 @@ import { useRouter } from "next/router";
 import ItemContext from "@/components/templates/items/item-context";
 import useLocalStorage from "@/utilities/use-local-storage";
 import { Keys } from "@/interfaces/keys";
+import Pagination from "@/components/pagination/pagination";
+
+const ITEMS_PER_PAGE = 9;
 
 const IndexStyled = styled.div`
   padding-block-start: 0.7em;
@@ -26,16 +29,27 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const Index = () => {
   const router = useRouter();
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [search, setSearch] = useState<string>("");
-  const [filters, setFilters] = useState<{ property: string; value: string }[]>([])
-    // [{ property: "category", value: "laptops" }]
+  const [filters, setFilters] = useState<
+    { property: string; value: string; forceClear?: boolean }[]
+  >([]);
 
   const handleFilterChanges = (filter: any) => {
-    if(filterApplied(filters, filter)) {
-      setFilters(prev => prev = prev.filter((x) => x.value !== filter.value))
-    } else {
-      setFilters(prev => prev = [...prev, filter]);
+    if (filter.forceClear) {
+      setFilters((prev) => (prev = []));
+      setCurrentPage((prev) => (prev = 1));
+      return;
     }
+
+    if (filterApplied(filters, filter)) {
+      setFilters(
+        (prev) => (prev = prev.filter((x) => x.value !== filter.value))
+      );
+    } else {
+      setFilters((prev) => (prev = [...prev, filter]));
+    }
+    setCurrentPage((prev) => (prev = 1));
   };
 
   const [storedBucket, setStoredBucket] = useLocalStorage<string[]>(
@@ -60,6 +74,10 @@ const Index = () => {
   if (error) return <div>Failed to load</div>;
   if (isLoading) return <div>Loading...</div>;
   if (!data) return null;
+
+  const handlePageChanges = (page: number): void => {
+    setCurrentPage((prev) => (prev = page));
+  };
 
   return (
     <ItemContext.Provider
@@ -120,10 +138,26 @@ const Index = () => {
 
               <Search
                 value={search}
-                onValueChanged={(value) => setSearch((prev) => (prev = value))}
+                onValueChanged={(value) => {
+                  setSearch((prev) => (prev = value));
+                  setCurrentPage((prev) => (prev = 1));
+                }}
               />
 
-              <ListOfItems items={values} />
+              <ListOfItems
+                items={values.slice(
+                  (currentPage - 1) * ITEMS_PER_PAGE,
+                  ITEMS_PER_PAGE * currentPage
+                )}
+              />
+
+              {values.length > ITEMS_PER_PAGE && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalCount={Math.ceil(values.length / ITEMS_PER_PAGE)}
+                  onPageChange={handlePageChanges}
+                />
+              )}
             </IndexStyled>
           </Container>
         }
@@ -133,6 +167,7 @@ const Index = () => {
             brands={data.brands}
             values={values}
             setFilters={handleFilterChanges}
+            itemFilters={filters}
           />
         }
       />
@@ -164,15 +199,26 @@ const searchItems = (
             .indexOf(query.toLowerCase()) > -1
         );
       });
-    }).filter((item) => {
-      if(filters.length === 0) {return true;}
-      else return [...filters].some((newItem) => {
-        return  (item as any)[newItem.property].toString().replace('-',"").toLowerCase().indexOf(newItem.value.replace(" ", "_").toLowerCase()) > -1;
-      });
+    })
+    .filter((item) => {
+      if (filters.length === 0) {
+        return true;
+      } else
+        return [...filters].some((newItem) => {
+          return (
+            (item as any)[newItem.property]
+              .toString()
+              .replace("-", "")
+              .toLowerCase()
+              .indexOf(newItem.value.replace(" ", "_").toLowerCase()) > -1
+          );
+        });
     });
 };
 
-const filterApplied = (filters: { property: string; value: string; }[], filter: { property: string; value: string; }): boolean =>  {
-  return filters.some(f => f.value === filter.value);
-}
-
+const filterApplied = (
+  filters: { property: string; value: string }[],
+  filter: { property: string; value: string }
+): boolean => {
+  return filters.some((f) => f.value === filter.value);
+};

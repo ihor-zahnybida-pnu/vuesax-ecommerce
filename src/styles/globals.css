@@ -1,0 +1,9 @@
+html,
+body,
+#__next,
+.app {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: #F9F9F9;
+}
